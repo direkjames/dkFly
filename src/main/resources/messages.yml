@@ -1,0 +1,90 @@
+# dkFly messages (MiniMessage format: https://docs.advntr.dev/minimessage/format.html)
+# Set any message to '' to disable it.
+# Author: direk james
+
+prefix: '<#7cc6ff><bold>dkFly</bold></#7cc6ff> <dark_gray>»</dark_gray> '
+
+no-permission: '<prefix><red>You don''t have permission to do that.'
+player-only: '<prefix><red>Only players can use this.'
+unknown-player: '<prefix><red>Player <white><player></white> has never joined.'
+invalid-time: '<prefix><red><input></red> is not a valid time. Examples: <white>30s</white>, <white>10m</white>, <white>1h30m</white>'
+reloaded: '<prefix><green>dkFly reloaded.'
+
+# ---- /fly ----
+fly-on: '<prefix><green>Flight enabled.</green> <gray>Time left: <white><time>'
+fly-on-unlimited: '<prefix><green>Flight enabled.</green> <gray>(unlimited)'
+fly-off: '<prefix><red>Flight disabled.'
+fly-on-other: '<prefix><gray>Enabled flight for <white><player></white>.'
+fly-off-other: '<prefix><gray>Disabled flight for <white><player></white>.'
+no-time: '<prefix><red>You have no fly time.</red> <gray>Buy some with <white>/flytime shop</white>.'
+denied-world: '<prefix><red>You can''t fly in this world.'
+denied-region: '<prefix><red>You can''t fly in this area.'
+denied-island: '<prefix><red>You can only fly on your own island.'
+denied-combat: '<prefix><red>You''re in combat! You can fly again in <white><time></white>.'
+denied-gamemode: '<prefix><gray>You can already fly in this game mode.'
+
+# Fly turned off automatically (player is safe-landed)
+disabled-world: '<prefix><red>Flight disabled: you entered a world where flying isn''t allowed.'
+disabled-region: '<prefix><red>Flight disabled: you entered a no-fly area.'
+disabled-island: '<prefix><red>Flight disabled: you left your island.'
+disabled-combat: '<prefix><red>Flight disabled: you''re in combat!'
+time-expired: '<prefix><red>Your fly time ran out!</red> <gray>Floating you down safely...'
+fly-restored: '<prefix><gray>Your flight was restored. Time left: <white><time>'
+
+# Action bar
+actionbar-flying: '<gray>Fly time: <white><time></white><dark_gray> | </dark_gray><gray>/flytime shop'
+actionbar-paused: '<yellow>Fly time paused (AFK)<dark_gray> | </dark_gray><white><time>'
+actionbar-countdown: '<red><bold>Fly time:</bold> <white><time></white> left!'
+
+# ---- /flytime ----
+balance: '<prefix><gray>Your fly time: <white><time></white><gray> (flight <status><gray>)'
+balance-unlimited: '<prefix><gray>Your fly time: <aqua>unlimited'
+balance-other: '<prefix><gray><white><player></white> has <white><time></white> of fly time.'
+help:
+  - '<#7cc6ff><bold>dkFly</bold> <gray>commands'
+  - '<white>/fly</white> <gray>- toggle flight'
+  - '<white>/flytime</white> <gray>- check your fly time'
+  - '<white>/flytime shop</white> <gray>- buy fly time'
+  - '<white>/flytime pay <player> <time></white> <gray>- give your fly time to someone'
+help-admin:
+  - '<white>/fly <player></white> <gray>- toggle someone''s flight'
+  - '<white>/flytime check <player></white> <gray>- see someone''s fly time'
+  - '<white>/flytime give|take|set <player> <time></white>'
+  - '<white>/flytime reload</white>'
+
+# Admin
+admin-give: '<prefix><gray>Gave <white><time></white> to <white><player></white>. They now have <white><total></white>.'
+admin-take: '<prefix><gray>Took <white><time></white> from <white><player></white>. They now have <white><total></white>.'
+admin-set: '<prefix><gray>Set <white><player></white>''s fly time to <white><total></white>.'
+admin-capped: '<prefix><yellow>Capped at the max fly time (<white><max></white>).'
+received-admin: '<prefix><green>You received <white><time></white> of fly time!'
+usage-admin: '<prefix><red>Usage: /flytime <action> <player> <time>'
+usage-check: '<prefix><red>Usage: /flytime check <player>'
+
+# ---- Transfer ----
+usage-pay: '<prefix><red>Usage: /flytime pay <player> <time>'
+pay-disabled: '<prefix><red>Fly time transfers are disabled.'
+pay-self: '<prefix><red>You can''t send fly time to yourself.'
+pay-min: '<prefix><red>You must send at least <white><min></white>.'
+pay-not-enough: '<prefix><red>You only have <white><time></white> of fly time.'
+pay-cooldown: '<prefix><red>Wait <white><time></white> before sending fly time again.'
+pay-offline-disabled: '<prefix><red><white><player></white> must be online to receive fly time.'
+pay-receiver-full: '<prefix><red><white><player></white> can''t hold that much fly time (max <white><max></white>).'
+pay-confirm: '<prefix><gray>Send <white><time></white> to <white><player></white>? They will receive <white><received></white>. Type <green><click:run_command:''/flytime confirm''>/flytime confirm</click></green> within <white><timeout></white>.'
+pay-no-pending: '<prefix><red>You have nothing to confirm.'
+pay-expired: '<prefix><red>Your transfer request expired.'
+pay-sent: '<prefix><green>Sent <white><time></white> of fly time to <white><player></white>.'
+pay-received: '<prefix><green><white><player></white> sent you <white><time></white> of fly time!'
+pay-failed: '<prefix><red>The transfer failed. Your fly time was not taken.'
+
+# ---- Shop ----
+shop-disabled: '<prefix><red>The fly shop is closed.'
+shop-no-economy: '<prefix><red>The shop is unavailable: no economy plugin found.'
+shop-bought: '<prefix><green>Bought <white><time></white> of fly time for <gold><price></gold>.'
+shop-not-enough-money: '<prefix><red>You need <gold><price></gold> but only have <gold><balance></gold>.'
+shop-full: '<prefix><red>That would go over the max fly time (<white><max></white>).'
+shop-no-permission: '<prefix><red>You can''t buy this package.'
+shop-info-name: '<aqua>Your fly time'
+shop-info-lore:
+  - '<gray>Remaining: <white><time>'
+  - '<gray>Balance: <gold><balance>'

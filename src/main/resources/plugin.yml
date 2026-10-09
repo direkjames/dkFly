@@ -1,0 +1,57 @@
+name: dkFly
+version: '${version}'
+main: com.direk.dkfly.DkFly
+api-version: '26.1'
+author: direk james
+description: Timed flight with a shop, transfers and region support.
+depend: [dkCore]
+softdepend: [WorldGuard, PlaceholderAPI, BentoBox, Vault, DirekAntiAFK]
+
+commands:
+  fly:
+    description: Toggle flight.
+    usage: /fly [player]
+    permission: dkfly.use
+  flytime:
+    description: Check fly time, open the shop, transfer time and admin tools.
+    usage: /flytime [shop|pay|confirm|check|give|take|set|reload]
+    aliases: [ftime]
+    permission: dkfly.use
+
+permissions:
+  dkfly.use:
+    description: Use /fly and /flytime.
+    default: true
+  dkfly.shop:
+    description: Open the fly shop.
+    default: true
+  dkfly.transfer:
+    description: Transfer fly time to other players.
+    default: true
+  dkfly.unlimited:
+    description: Fly without using fly time.
+    default: false
+  dkfly.others:
+    description: Toggle flight for other players.
+    default: op
+  dkfly.check.others:
+    description: Check other players' fly time.
+    default: op
+  dkfly.admin:
+    description: give, take, set and reload.
+    default: op
+    children:
+      dkfly.others: true
+      dkfly.check.others: true
+  dkfly.bypass.world:
+    description: Fly in blacklisted worlds.
+    default: false
+  dkfly.bypass.region:
+    description: Ignore WorldGuard and BentoBox fly restrictions.
+    default: false
+  dkfly.bypass.combat:
+    description: Not affected by combat tag.
+    default: false
+  dkfly.bypass.cooldown:
+    description: No transfer cooldown.
+    default: op

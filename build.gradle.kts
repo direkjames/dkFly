@@ -10,9 +10,16 @@ group = "com.direk"
 version = "1.0.0"
 
 repositories {
-    mavenLocal()                                              // dkCore (publishToMavenLocal)
+    // dkCore (publishToMavenLocal). Only our own group is looked up here.
+    mavenLocal {
+        content { includeGroup("com.direk") }
+    }
     mavenCentral()
-    maven("https://repo.purpurmc.org/snapshots")              // Purpur API
+    // Purpur API. The Purpur repo rejects lookups for other projects (HTTP 406),
+    // so it's only asked for Purpur's own group.
+    maven("https://repo.purpurmc.org/snapshots") {
+        content { includeGroup("org.purpurmc.purpur") }
+    }
     maven("https://repo.papermc.io/repository/maven-public/") // Paper / Adventure
     maven("https://maven.enginehub.org/repo/")                // WorldGuard / WorldEdit
     maven("https://repo.extendedclip.com/releases/")          // PlaceholderAPI

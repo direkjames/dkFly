@@ -79,16 +79,6 @@ combat:
 worldguard:
   enabled: true
 
-# ---- BentoBox / AOneBlock ----
-bentobox:
-  enabled: true
-  # Game modes to restrict. Other BentoBox worlds are ignored by this check.
-  gamemodes: [AOneBlock]
-  # Only allow flying on an island where the player is an owner or member.
-  own-island-only: true
-  # Also require them to be inside the island's protected area (not the empty space around it).
-  protection-range-only: true
-
 # ---- PlaceholderAPI ----
 # %dkfly_time%          remaining time (uses time-format below)
 # %dkfly_time_seconds%  remaining time in seconds

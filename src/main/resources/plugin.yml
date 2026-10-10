@@ -5,7 +5,7 @@ api-version: '26.1'
 author: direk james
 description: Timed flight with a shop, transfers and region support.
 depend: [dkCore]
-softdepend: [WorldGuard, PlaceholderAPI, BentoBox, Vault, DirekAntiAFK]
+softdepend: [WorldGuard, PlaceholderAPI, Vault, DirekAntiAFK]
 
 commands:
   fly:
@@ -47,7 +47,7 @@ permissions:
     description: Fly in blacklisted worlds.
     default: false
   dkfly.bypass.region:
-    description: Ignore WorldGuard and BentoBox fly restrictions.
+    description: Ignore the WorldGuard dkfly flag.
     default: false
   dkfly.bypass.combat:
     description: Not affected by combat tag.

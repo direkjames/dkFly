@@ -4,7 +4,6 @@ import com.direk.dkcore.message.Messages;
 import com.direk.dkfly.DkFly;
 import com.direk.dkfly.Settings;
 import com.direk.dkfly.data.FlyData;
-import com.direk.dkfly.hook.BentoBoxHook;
 import com.direk.dkfly.hook.WorldGuardHook;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -27,7 +26,6 @@ public final class FlightManager {
     private final CombatTracker combat = new CombatTracker();
 
     private boolean worldGuardPresent;
-    private boolean bentoBoxPresent;
     private boolean warnedPurpurAfk;
 
     public FlightManager(DkFly plugin) {
@@ -36,13 +34,10 @@ public final class FlightManager {
 
     public void detectHooks() {
         worldGuardPresent = Bukkit.getPluginManager().isPluginEnabled("WorldGuard") && WorldGuardHook.ready();
-        bentoBoxPresent = BentoBoxHook.init(plugin.getLogger());
     }
 
     public boolean worldGuardActive() { return worldGuardPresent && s().worldGuard; }
-    public boolean bentoBoxActive() { return bentoBoxPresent && s().bentoBox; }
     public boolean worldGuardInstalled() { return worldGuardPresent; }
-    public boolean bentoBoxInstalled() { return bentoBoxPresent; }
 
     public LandingManager landing() { return landing; }
     public CombatTracker combat() { return combat; }
@@ -70,7 +65,6 @@ public final class FlightManager {
         if (!p.hasPermission("dkfly.bypass.region")) {
             try {
                 if (s().worldGuard && worldGuardPresent && !WorldGuardHook.canFly(p, loc)) return Denial.REGION;
-                if (s().bentoBox && bentoBoxPresent && !BentoBoxHook.canFly(p, loc, s())) return Denial.ISLAND;
             } catch (Throwable t) {
                 plugin.getLogger().log(Level.WARNING, "Region hook error (allowing flight)", t);
             }

@@ -22,7 +22,8 @@ The dkCore version is set in `gradle.properties` (`dkCoreVersion`).
 - World blacklist, configurable speed with permission tiers, unlimited permission
 - GUI fly shop (Vault economy → dkBank), transfers with confirm, cooldown and tax
 - Combat tag, admin give/take/set/check
-- WorldGuard flag `dkfly`, BentoBox/AOneBlock own-island only, PlaceholderAPI, AFK pause
+- WorldGuard flag `dkfly`, PlaceholderAPI, AFK pause
+- Works in any game mode (survival, skyblock/OneBlock, etc.); island fly is left to BentoBox's own addon
 - Startup banner showing version, hooks and settings (`startup-banner: false` to hide)
 
 ## Commands

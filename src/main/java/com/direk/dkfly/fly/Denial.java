@@ -10,7 +10,6 @@ public enum Denial {
     NO_TIME("no-time", "time-expired"),
     WORLD("denied-world", "disabled-world"),
     REGION("denied-region", "disabled-region"),
-    ISLAND("denied-island", "disabled-island"),
     COMBAT("denied-combat", "disabled-combat");
 
     public final String denyKey;

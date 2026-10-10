@@ -65,9 +65,6 @@ final class FlyBanner {
         // Integrations
         row("WorldGuard", hook(flight.worldGuardInstalled(), s.worldGuard,
                 "flag <white>dkfly</white> registered"));
-        row("BentoBox", hook(flight.bentoBoxInstalled(), s.bentoBox,
-                s.bentoOwnIslandOnly ? "own/team island only in <white><v></white>" : "no island limit"),
-                v(s.bentoGamemodes.isEmpty() ? "all game modes" : String.join(", ", s.bentoGamemodes)));
         row("PAPI", placeholderApi ? YES + " <dark_gray>%dkfly_time% and 4 more" : NO);
         String eco = plugin.economy().name();
         row("Economy", eco.equals("none") ? "<yellow>none found (fly shop disabled)" : YES + " <dark_gray><v>", v(eco));

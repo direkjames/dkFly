@@ -47,10 +47,6 @@ public final class Settings {
 
     public final boolean worldGuard;
 
-    public final boolean bentoBox;
-    public final Set<String> bentoGamemodes;
-    public final boolean bentoOwnIslandOnly;
-    public final boolean bentoProtectionRangeOnly;
 
     public final String placeholderUnlimited;
     public final String statusOn;
@@ -123,11 +119,6 @@ public final class Settings {
 
         worldGuard = c.getBoolean("worldguard.enabled", true);
 
-        bentoBox = c.getBoolean("bentobox.enabled", true);
-        bentoGamemodes = new HashSet<>();
-        for (String s : c.getStringList("bentobox.gamemodes")) bentoGamemodes.add(s.toLowerCase());
-        bentoOwnIslandOnly = c.getBoolean("bentobox.own-island-only", true);
-        bentoProtectionRangeOnly = c.getBoolean("bentobox.protection-range-only", true);
 
         placeholderUnlimited = c.getString("placeholders.unlimited", "∞");
         statusOn = c.getString("placeholders.status-on", "<green>ON");

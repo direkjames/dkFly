@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 
 /**
  * Loading, saving and keeping flight correct across joins, worlds and game modes.
@@ -47,7 +48,14 @@ public final class PlayerListener implements Listener {
         if (d != null) d.wasFlying(d.enabled() && p.isFlying());
         plugin.flight().forget(p);
         plugin.transfers().forget(p.getUniqueId());
+        plugin.shop().forget(p.getUniqueId());
         plugin.data().quit(p);
+    }
+
+    /** Timestamps every take-off and landing so fly time is charged exactly. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onToggleFlight(PlayerToggleFlightEvent e) {
+        plugin.flight().onToggleFlight(e.getPlayer(), e.isFlying());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -2,16 +2,18 @@ package com.direk.dkfly;
 
 import com.direk.dkcore.util.TimeFormatter;
 import com.direk.dkcore.util.TimeUtil;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 /**
@@ -20,7 +22,21 @@ import java.util.logging.Logger;
  */
 public final class Settings {
 
-    public enum LandingMode { SLOW_FALLING, NO_FALL_DAMAGE, BOTH }
+    /** What happens when flight is turned off while the player is in the air. */
+    public enum Landing {
+        SLOW_FALLING, NO_FALL_DAMAGE, BOTH, NONE;
+
+        public boolean slowFalling() { return this == SLOW_FALLING || this == BOTH; }
+        public boolean noFallDamage() { return this == NO_FALL_DAMAGE || this == BOTH; }
+    }
+
+    /** Where the live fly timer is shown. */
+    public enum Display {
+        BOSSBAR, ACTIONBAR, BOTH, NONE;
+
+        public boolean bossBar() { return this == BOSSBAR || this == BOTH; }
+        public boolean actionBar() { return this == ACTIONBAR || this == BOTH; }
+    }
 
     public final Set<String> worldBlacklist;
     public final long maxTime; // 0 = no cap
@@ -28,13 +44,25 @@ public final class Settings {
     public final float defaultSpeed;
     public final Map<String, Float> speedPermissions;
 
-    public final LandingMode landingMode;
+    public final double selfDisableMaxHeight;
+    public final Landing landingOutOfTime;
+    public final Landing landingAdmin;
+    public final Landing landingRestricted;
+    public final Landing landingCombat;
     public final long landingMaxSeconds;
 
+    public final Display display;
+    public final BossBar.Overlay bossBarOverlay;
+    public final BossBar.Color bossBarHigh;
+    public final BossBar.Color bossBarMedium;
+    public final BossBar.Color bossBarLow;
+    public final double bossBarMediumBelow; // 0..1
+    public final double bossBarLowBelow;    // 0..1
+
     public final boolean countdownEnabled;
-    public final Set<Long> countdownAt;
+    public final TreeSet<Long> countdownAt;
+    public final long countdownHighest;
     public final Sound countdownSound; // null = no sound
-    public final boolean actionbarWhileFlying;
 
     public final boolean persistToggle;
 
@@ -42,11 +70,9 @@ public final class Settings {
     public final boolean purpurAfkFallback;
 
     public final boolean combatEnabled;
-    public final boolean combatDisableFly;
     public final long combatCooldown;
 
     public final boolean worldGuard;
-
 
     public final String placeholderUnlimited;
     public final String statusOn;
@@ -61,7 +87,9 @@ public final class Settings {
     public final long transferConfirmTimeout;
     public final boolean transferOffline;
 
+    public final boolean shopEnabled;
     public final int autosaveMinutes;
+    public final boolean startupBanner;
 
     public Settings(YamlConfiguration c, Logger log) {
         worldBlacklist = new HashSet<>(c.getStringList("world-blacklist"));
@@ -73,27 +101,43 @@ public final class Settings {
             int i = entry.lastIndexOf(':');
             if (i <= 0) { log.warning("Bad speed permission entry: " + entry); continue; }
             try {
-                speedPermissions.put(entry.substring(0, i).trim(), clampSpeed(Double.parseDouble(entry.substring(i + 1).trim())));
+                speedPermissions.put(entry.substring(0, i).trim(),
+                        clampSpeed(Double.parseDouble(entry.substring(i + 1).trim())));
             } catch (NumberFormatException e) {
                 log.warning("Bad speed in entry: " + entry);
             }
         }
 
-        LandingMode lm;
-        try {
-            lm = LandingMode.valueOf(c.getString("landing.mode", "BOTH").toUpperCase());
-        } catch (IllegalArgumentException e) {
-            log.warning("Unknown landing.mode, using BOTH");
-            lm = LandingMode.BOTH;
-        }
-        landingMode = lm;
+        selfDisableMaxHeight = Math.max(0, c.getDouble("landing.self-disable-max-height", 3));
+        landingOutOfTime = landing(c, "landing.out-of-time", Landing.BOTH, log);
+        landingAdmin = landing(c, "landing.admin", Landing.BOTH, log);
+        landingRestricted = landing(c, "landing.restricted-area", Landing.NO_FALL_DAMAGE, log);
+        landingCombat = landing(c, "landing.combat", Landing.NONE, log);
         landingMaxSeconds = Math.max(1, TimeUtil.parseOr(c.getString("landing.max-duration", "30s"), 30));
 
+        display = parse(Display.class, c.getString("display.mode", "BOSSBAR"), Display.BOSSBAR, "display.mode", log);
+        bossBarOverlay = parse(BossBar.Overlay.class, c.getString("display.bossbar.style", "PROGRESS"),
+                BossBar.Overlay.PROGRESS, "display.bossbar.style", log);
+        bossBarHigh = parse(BossBar.Color.class, c.getString("display.bossbar.color-high", "GREEN"),
+                BossBar.Color.GREEN, "display.bossbar.color-high", log);
+        bossBarMedium = parse(BossBar.Color.class, c.getString("display.bossbar.color-medium", "YELLOW"),
+                BossBar.Color.YELLOW, "display.bossbar.color-medium", log);
+        bossBarLow = parse(BossBar.Color.class, c.getString("display.bossbar.color-low", "RED"),
+                BossBar.Color.RED, "display.bossbar.color-low", log);
+        bossBarMediumBelow = percent(c.getDouble("display.bossbar.medium-below-percent", 50));
+        bossBarLowBelow = percent(c.getDouble("display.bossbar.low-below-percent", 20));
+
         countdownEnabled = c.getBoolean("countdown.enabled", true);
-        countdownAt = new HashSet<>();
+        countdownAt = new TreeSet<>();
         for (Object o : c.getList("countdown.at", List.of())) {
-            try { countdownAt.add(Long.parseLong(String.valueOf(o))); } catch (NumberFormatException ignored) {}
+            try {
+                long v = Long.parseLong(String.valueOf(o).trim());
+                if (v > 0) countdownAt.add(v);
+            } catch (NumberFormatException e) {
+                log.warning("Ignoring bad countdown value: " + o);
+            }
         }
+        countdownHighest = countdownAt.isEmpty() ? 0 : countdownAt.last();
         Sound snd = null;
         if (c.getBoolean("countdown.sound.enabled", true)) {
             try {
@@ -106,7 +150,6 @@ public final class Settings {
             }
         }
         countdownSound = snd;
-        actionbarWhileFlying = c.getBoolean("actionbar-while-flying", true);
 
         persistToggle = c.getBoolean("persist-toggle", true);
 
@@ -114,11 +157,9 @@ public final class Settings {
         purpurAfkFallback = c.getBoolean("afk.use-purpur-afk-fallback", true);
 
         combatEnabled = c.getBoolean("combat.enabled", true);
-        combatDisableFly = c.getBoolean("combat.disable-fly", true);
         combatCooldown = TimeUtil.parseOr(c.getString("combat.cooldown", "15s"), 15);
 
         worldGuard = c.getBoolean("worldguard.enabled", true);
-
 
         placeholderUnlimited = c.getString("placeholders.unlimited", "∞");
         statusOn = c.getString("placeholders.status-on", "<green>ON");
@@ -133,7 +174,9 @@ public final class Settings {
         transferConfirmTimeout = Math.max(5, TimeUtil.parseOr(c.getString("transfer.confirm-timeout", "30s"), 30));
         transferOffline = c.getBoolean("transfer.allow-offline", true);
 
+        shopEnabled = c.getBoolean("shop.enabled", true);
         autosaveMinutes = Math.max(1, c.getInt("autosave-minutes", 5));
+        startupBanner = c.getBoolean("startup-banner", true);
     }
 
     /** Applies the max-time cap (if any). */
@@ -141,8 +184,22 @@ public final class Settings {
         return maxTime > 0 ? Math.min(seconds, maxTime) : seconds;
     }
 
-    public List<String> speedPermissionNames() {
-        return new ArrayList<>(speedPermissions.keySet());
+    private static Landing landing(YamlConfiguration c, String path, Landing def, Logger log) {
+        return parse(Landing.class, c.getString(path, def.name()), def, path, log);
+    }
+
+    private static <E extends Enum<E>> E parse(Class<E> type, String value, E def, String path, Logger log) {
+        if (value == null) return def;
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            log.warning("Unknown value '" + value + "' for " + path + ", using " + def.name());
+            return def;
+        }
+    }
+
+    private static double percent(double p) {
+        return Math.max(0, Math.min(100, p)) / 100.0;
     }
 
     private static float clampSpeed(double v) {

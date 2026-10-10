@@ -21,13 +21,20 @@ import java.util.logging.Level;
  */
 public final class FlyDataManager {
 
-    private static final long LOADING_TIMEOUT_MS = 15_000;
+    /** How long a login may take (including resource pack / configuration phase) before offline edits are allowed again. */
+    private static final long LOADING_TIMEOUT_MS = 120_000;
 
     private final DkFly plugin;
     private final FlyRepository repo;
     private final Map<UUID, FlyData> online = new ConcurrentHashMap<>();
     private final Map<UUID, FlyData> preloaded = new ConcurrentHashMap<>();
     private final Map<UUID, Long> loading = new ConcurrentHashMap<>();
+    /**
+     * Guards "is this player logging in?" + "queue a database job" so the two can't interleave.
+     * Without it an offline edit could be queued after a login's load, and the joining
+     * player would then overwrite it with stale data (lost or duplicated time).
+     */
+    private final Object loginLock = new Object();
 
     public FlyDataManager(DkFly plugin, FlyRepository repo) {
         this.plugin = plugin;
@@ -36,9 +43,13 @@ public final class FlyDataManager {
 
     /** Called from AsyncPlayerPreLoginEvent (off the main thread). Blocks until loaded. */
     public void preload(UUID uuid) {
-        loading.put(uuid, System.currentTimeMillis());
+        CompletableFuture<FlyData> load;
+        synchronized (loginLock) {
+            loading.put(uuid, System.currentTimeMillis());
+            load = repo.load(uuid);
+        }
         try {
-            preloaded.put(uuid, repo.load(uuid).join());
+            preloaded.put(uuid, load.join());
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Could not load fly data for " + uuid, e);
         }
@@ -102,12 +113,15 @@ public final class FlyDataManager {
         FlyData data = online.get(uuid);
         if (data != null) {
             data.seconds(change.applyAsLong(data.seconds()));
+            saveNow(uuid);
             return CompletableFuture.completedFuture(data.seconds());
         }
-        if (isLoggingIn(uuid)) {
-            return CompletableFuture.failedFuture(new IllegalStateException("player is logging in"));
+        synchronized (loginLock) {
+            if (isLoggingIn(uuid)) {
+                return CompletableFuture.failedFuture(new IllegalStateException("player is logging in"));
+            }
+            return repo.modifyOffline(uuid, change);
         }
-        return repo.modifyOffline(uuid, change);
     }
 
     /** Reads seconds for any player (cache first). */
@@ -117,8 +131,25 @@ public final class FlyDataManager {
         return repo.load(uuid).thenApply(FlyData::seconds);
     }
 
-    /** Saves players whose data changed. */
+    /**
+     * Saves an online player right away (after a purchase, transfer or admin change),
+     * so a crash can't undo something they paid for.
+     */
+    public void saveNow(UUID uuid) {
+        FlyData d = online.get(uuid);
+        if (d == null) return;
+        repo.save(d.snapshot());
+        d.markClean();
+    }
+
+    /** Saves players whose data changed, and forgets logins that never finished (kicked, banned, full). */
     public void saveDirty() {
+        long now = System.currentTimeMillis();
+        loading.entrySet().removeIf(e -> {
+            boolean stale = now - e.getValue() >= LOADING_TIMEOUT_MS;
+            if (stale) preloaded.remove(e.getKey());
+            return stale;
+        });
         List<FlyData.Snapshot> batch = new ArrayList<>();
         for (FlyData d : online.values()) {
             if (d.dirty()) {

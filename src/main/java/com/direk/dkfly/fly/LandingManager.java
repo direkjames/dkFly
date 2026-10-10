@@ -1,80 +1,93 @@
 package com.direk.dkfly.fly;
 
 import com.direk.dkfly.Settings;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Brings players down safely when their flight is turned off mid-air.
- * Slow Falling and/or fall-damage protection last until they touch the ground
- * (or landing.max-duration runs out).
+ * Brings players down when flight is turned off while they're in the air.
+ * Depending on why it was turned off they get Slow Falling, fall-damage protection,
+ * both, or nothing (see config "landing"). Protection ends as soon as they touch
+ * the ground, or after landing.max-duration as a safety limit.
  * Author: direk james
  */
 public final class LandingManager {
 
-    private final Map<UUID, Long> protectedUntil = new HashMap<>();
-    private final Map<UUID, Boolean> gaveSlowFalling = new HashMap<>();
+    private static final Vector DOWN = new Vector(0, -1, 0);
 
-    public void safeLand(Player player, Settings s) {
-        if (isGrounded(player)) return;
-        long until = System.currentTimeMillis() + s.landingMaxSeconds * 1000L;
-        protectedUntil.put(player.getUniqueId(), until);
+    private final Map<UUID, Protection> active = new HashMap<>();
 
-        boolean slow = s.landingMode != Settings.LandingMode.NO_FALL_DAMAGE;
-        if (slow) {
-            int ticks = (int) Math.min(Integer.MAX_VALUE, s.landingMaxSeconds * 20L);
+    /** Starts the landing effect. Does nothing if the player is already on the ground. */
+    public void land(Player player, Settings.Landing mode, long maxSeconds) {
+        clear(player);
+        if (mode == Settings.Landing.NONE || isGrounded(player)) return;
+
+        long until = System.currentTimeMillis() + maxSeconds * 1000L;
+        boolean slow = false;
+        if (mode.slowFalling()) {
+            int ticks = (int) Math.min(Integer.MAX_VALUE, maxSeconds * 20L);
+            // ambient=false, particles=false, icon=true. The "no particles" flag marks it as ours.
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, ticks, 0, false, false, true));
-            gaveSlowFalling.put(player.getUniqueId(), true);
+            slow = true;
         }
-        // Even in SLOW_FALLING mode we keep the record so the effect is removed on landing.
+        active.put(player.getUniqueId(), new Protection(until, mode.noFallDamage(), slow));
     }
 
-    /** @return true if this fall damage should be cancelled. */
-    public boolean shouldCancelFall(Player player, Settings s) {
-        Long until = protectedUntil.get(player.getUniqueId());
-        if (until == null) return false;
+    /** @return true if this fall damage should be cancelled. Ends the protection either way. */
+    public boolean shouldCancelFall(Player player) {
+        Protection p = active.get(player.getUniqueId());
+        if (p == null) return false;
         clear(player);
-        return s.landingMode != Settings.LandingMode.SLOW_FALLING && System.currentTimeMillis() <= until;
+        return p.noFallDamage && System.currentTimeMillis() <= p.until;
     }
 
     /** Called every second: ends protection for players who have landed or timed out. */
     public void tick(Player player) {
-        Long until = protectedUntil.get(player.getUniqueId());
-        if (until == null) return;
-        if (System.currentTimeMillis() > until || (isGrounded(player) && player.getFallDistance() == 0f)
-                || player.isFlying()) {
-            clear(player);
-        }
+        Protection p = active.get(player.getUniqueId());
+        if (p == null) return;
+        boolean landed = isGrounded(player) && player.getFallDistance() == 0f;
+        if (landed || player.isFlying() || System.currentTimeMillis() > p.until) clear(player);
     }
 
     public void clear(Player player) {
-        protectedUntil.remove(player.getUniqueId());
-        if (gaveSlowFalling.remove(player.getUniqueId()) != null) {
-            PotionEffect effect = player.getPotionEffect(PotionEffectType.SLOW_FALLING);
-            // Only remove the effect we gave (ambient=false, no particles) so potions players drank stay.
-            if (effect != null && !effect.hasParticles()) {
-                player.removePotionEffect(PotionEffectType.SLOW_FALLING);
-            }
+        Protection p = active.remove(player.getUniqueId());
+        if (p == null || !p.gaveSlowFalling) return;
+        PotionEffect effect = player.getPotionEffect(PotionEffectType.SLOW_FALLING);
+        // Only remove the effect we gave, so Slow Falling potions players drank are kept.
+        if (effect != null && !effect.hasParticles() && !effect.isAmbient()) {
+            player.removePotionEffect(PotionEffectType.SLOW_FALLING);
         }
     }
 
     public void forget(UUID uuid) {
-        protectedUntil.remove(uuid);
-        gaveSlowFalling.remove(uuid);
+        active.remove(uuid);
     }
 
-    public boolean isProtected(Player player) {
-        return protectedUntil.containsKey(player.getUniqueId());
+    @SuppressWarnings("deprecation") // isOnGround is client-reported but fine for this purpose
+    public static boolean isGrounded(Player player) {
+        return player.isOnGround() || player.isInWater() || player.isClimbing() || player.isInsideVehicle();
     }
 
-    @SuppressWarnings("deprecation")
-    static boolean isGrounded(Player player) {
-        return player.isOnGround() || player.isInWater() || player.isClimbing();
+    /**
+     * True if the player is higher than {@code maxHeight} blocks above the ground (or water) below them.
+     */
+    public static boolean isHigherThan(Player player, double maxHeight) {
+        if (isGrounded(player)) return false;
+        Location loc = player.getLocation();
+        if (loc.getWorld() == null) return false;
+        RayTraceResult hit = loc.getWorld().rayTraceBlocks(loc, DOWN, maxHeight + 0.01,
+                FluidCollisionMode.ALWAYS, true);
+        return hit == null;
     }
+
+    private record Protection(long until, boolean noFallDamage, boolean gaveSlowFalling) {}
 }

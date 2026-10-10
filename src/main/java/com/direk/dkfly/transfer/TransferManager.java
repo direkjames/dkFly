@@ -96,8 +96,8 @@ public final class TransferManager {
             return;
         }
 
-        // Take from the sender first; give it back if delivery fails.
-        d.seconds(d.seconds() - p.amount());
+        // Take from the sender first (saved right away); give it back if delivery fails.
+        plugin.data().modify(sender.getUniqueId(), v -> v - p.amount());
         cooldownUntil.put(sender.getUniqueId(), System.currentTimeMillis() + s().transferCooldown * 1000L);
 
         long max = s().maxTime;
@@ -133,12 +133,27 @@ public final class TransferManager {
 
     private void refund(Player sender, long amount) {
         cooldownUntil.remove(sender.getUniqueId());
-        if (sender.isOnline()) {
-            FlyData d = plugin.data().get(sender);
-            d.seconds(d.seconds() + amount);
-        } else {
-            plugin.data().modify(sender.getUniqueId(), v -> v + amount);
-        }
+        refund(sender.getUniqueId(), sender.getName(), amount, 0);
+    }
+
+    /** Gives time back, retrying if the sender happens to be mid-login right now. */
+    private void refund(UUID uuid, String name, long amount, int attempt) {
+        plugin.data().modify(uuid, v -> v + amount).whenComplete((v, error) -> {
+            if (error == null) return;
+            if (attempt < 12) {
+                plugin.tasks().sync(() -> plugin.tasks().later(() -> refund(uuid, name, amount, attempt + 1), 100L));
+            } else {
+                plugin.getLogger().severe("Could not refund " + amount + "s of fly time to " + name
+                        + " (" + uuid + "). Give it back with /flytime give " + name + " " + amount);
+            }
+        });
+    }
+
+    /** Called on quit: drop their pending request and any expired cooldown. */
+    public void forget(UUID uuid) {
+        pending.remove(uuid);
+        Long until = cooldownUntil.get(uuid);
+        if (until != null && until <= System.currentTimeMillis()) cooldownUntil.remove(uuid);
     }
 
     private long cooldownLeft(Player p) {
@@ -149,9 +164,6 @@ public final class TransferManager {
         return left <= 0 ? 0 : (left + 999) / 1000;
     }
 
-    public void forget(UUID uuid) {
-        pending.remove(uuid);
-    }
 
     private record Pending(PlayerRef target, long amount, long received, long expires) {}
 }

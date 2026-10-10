@@ -16,20 +16,27 @@ fly-on-unlimited: '<prefix><green>Flight enabled.</green> <gray>(unlimited)'
 fly-off: '<prefix><red>Flight disabled.'
 fly-on-other: '<prefix><gray>Enabled flight for <white><player></white>.'
 fly-off-other: '<prefix><gray>Disabled flight for <white><player></white>.'
+fly-other-failed: '<prefix><red>Couldn''t change <white><player></white>''s flight. They were told why.'
+land-first: '<prefix><yellow>Land first before turning off flight.</yellow> <gray>Fly closer to the ground, then use <white>/fly</white>.'
 no-time: '<prefix><red>You have no fly time.</red> <gray>Buy some with <white>/flytime shop</white>.'
 denied-world: '<prefix><red>You can''t fly in this world.'
 denied-region: '<prefix><red>You can''t fly in this area.'
 denied-combat: '<prefix><red>You''re in combat! You can fly again in <white><time></white>.'
 denied-gamemode: '<prefix><gray>You can already fly in this game mode.'
 
-# Fly turned off automatically (player is safe-landed)
+# Fly turned off automatically (what happens next depends on "landing" in config.yml)
 disabled-world: '<prefix><red>Flight disabled: you entered a world where flying isn''t allowed.'
 disabled-region: '<prefix><red>Flight disabled: you entered a no-fly area.'
 disabled-combat: '<prefix><red>Flight disabled: you''re in combat!'
-time-expired: '<prefix><red>Your fly time ran out!</red> <gray>Floating you down safely...'
+time-expired: '<prefix><red>Your fly time ran out!</red> <gray>Buy more with <white>/flytime shop</white>.'
 fly-restored: '<prefix><gray>Your flight was restored. Time left: <white><time>'
 
-# Action bar
+# Boss bar title (display.mode BOSSBAR or BOTH)
+bossbar-flying: '<white>Fly time: <aqua><time>'
+bossbar-paused: '<yellow>Fly time paused (AFK): <white><time>'
+bossbar-countdown: '<red><bold>Fly time running out:</bold> <white><time>'
+
+# Action bar (display.mode ACTIONBAR or BOTH; the countdown also shows here with NONE)
 actionbar-flying: '<gray>Fly time: <white><time></white><dark_gray> | </dark_gray><gray>/flytime shop'
 actionbar-paused: '<yellow>Fly time paused (AFK)<dark_gray> | </dark_gray><white><time>'
 actionbar-countdown: '<red><bold>Fly time:</bold> <white><time></white> left!'
@@ -56,6 +63,7 @@ admin-take: '<prefix><gray>Took <white><time></white> from <white><player></whit
 admin-set: '<prefix><gray>Set <white><player></white>''s fly time to <white><total></white>.'
 admin-capped: '<prefix><yellow>Capped at the max fly time (<white><max></white>).'
 received-admin: '<prefix><green>You received <white><time></white> of fly time!'
+admin-failed: '<prefix><red>Couldn''t change <white><player></white>''s fly time right now (they may be logging in). Try again in a moment.'
 usage-admin: '<prefix><red>Usage: /flytime <action> <player> <time>'
 usage-check: '<prefix><red>Usage: /flytime check <player>'
 
@@ -82,7 +90,4 @@ shop-bought: '<prefix><green>Bought <white><time></white> of fly time for <gold>
 shop-not-enough-money: '<prefix><red>You need <gold><price></gold> but only have <gold><balance></gold>.'
 shop-full: '<prefix><red>That would go over the max fly time (<white><max></white>).'
 shop-no-permission: '<prefix><red>You can''t buy this package.'
-shop-info-name: '<aqua>Your fly time'
-shop-info-lore:
-  - '<gray>Remaining: <white><time>'
-  - '<gray>Balance: <gold><balance>'
+# The shop's layout, items and their text are in gui.yml.

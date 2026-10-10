@@ -42,7 +42,7 @@ final class FlyBanner {
 
     void print(boolean placeholderApi, long enabledMs) {
         String version = plugin.getPluginMeta().getVersion();
-        if (!plugin.cfg().yaml().getBoolean("startup-banner", true)) {
+        if (!plugin.settings().startupBanner) {
             plugin.getLogger().info("dkFly v" + version + " enabled in " + enabledMs + " ms");
             return;
         }
@@ -83,6 +83,7 @@ final class FlyBanner {
         row("Blacklist", "<white><v></white> <dark_gray>world(s)", v(s.worldBlacklist.size()));
         row("Max time", "<white><v>", v(s.maxTime > 0 ? s.time.format(s.maxTime) : "no limit"));
         row("Combat", s.combatEnabled ? YES + " <dark_gray><v> cooldown" : NO, v(s.time.format(s.combatCooldown)));
+        row("Display", "<white><v>", v(s.display.name().toLowerCase()));
         row("Status", "<green>Enabled</green> <dark_gray>in <v> ms", v(enabledMs));
         line(LINE);
         blank();

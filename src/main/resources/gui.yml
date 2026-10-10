@@ -1,0 +1,111 @@
+# ============================================
+#  dkFly - Fly Shop GUI  (/flytime shop)
+#  Author: direk james
+#
+#  Edit freely, then run /flytime reload.
+#  Text uses MiniMessage: https://docs.advntr.dev/minimessage/format.html
+#
+#  Slots start at 0 (top-left). A 3-row GUI has slots 0-26:
+#     0  1  2  3  4  5  6  7  8
+#     9 10 11 12 13 14 15 16 17
+#    18 19 20 21 22 23 24 25 26
+#
+#  CUSTOM HEADS (minecraft-heads.com)
+#    Set material to PLAYER_HEAD and add a texture. Any of these work:
+#      texture: 'eyJ0ZXh0dXJlcyI6...'   <- the "Value" from the head's page ("For Developers" section)
+#      texture: '4cd9eeee883468881d...' <- just the texture ID (the long code in the texture URL)
+#      texture: 'http://textures.minecraft.net/texture/4cd9eeee...'
+#      texture: '%player%'              <- the viewer's own head
+#
+#  Placeholders you can use in names and lore:
+#    <time>     package time (packages) or the player's fly time (info item)
+#    <price>    package price
+#    <balance>  the player's money
+#    <player>   the player's name
+# ============================================
+
+title: '<dark_gray>Fly Shop'
+rows: 3
+
+# Fills every empty slot. Set enabled: false to leave them empty.
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: ''
+
+# Shows the player's fly time and balance.
+info:
+  enabled: true
+  slot: 4
+  material: PLAYER_HEAD
+  texture: '%player%'
+  name: '<aqua>Your fly time'
+  lore:
+    - '<gray>Remaining: <white><time>'
+    - '<gray>Balance: <gold><balance>'
+
+# Closes the menu.
+close:
+  enabled: true
+  slot: 22
+  material: BARRIER
+  name: '<red>Close'
+  lore: []
+
+# ---- Packages players can buy ----
+# Add, edit or delete entries. The key (small, medium...) is just an ID.
+#   slot        where it goes
+#   time        fly time given: 30s, 15m, 1h, 1h30m, 2d
+#   price       cost in server money
+#   permission  optional, only players with it can buy (leave '' for everyone)
+#   glow        optional enchant glint
+#   amount      optional stack size shown (1-64)
+items:
+  small:
+    slot: 11
+    material: FEATHER
+    name: '<aqua>15 Minutes of Flight'
+    time: 15m
+    price: 500
+    lore:
+      - '<gray>Adds <white><time></white> of fly time.'
+      - ''
+      - '<gray>Price: <gold><price>'
+      - '<yellow>Click to buy'
+  medium:
+    slot: 13
+    material: ELYTRA
+    name: '<aqua>1 Hour of Flight'
+    time: 1h
+    price: 1800
+    lore:
+      - '<gray>Adds <white><time></white> of fly time.'
+      - ''
+      - '<gray>Price: <gold><price>'
+      - '<yellow>Click to buy'
+  large:
+    slot: 15
+    material: PHANTOM_MEMBRANE
+    name: '<light_purple>5 Hours of Flight'
+    time: 5h
+    price: 8000
+    glow: true
+    permission: ''
+    lore:
+      - '<gray>Adds <white><time></white> of fly time.'
+      - ''
+      - '<gray>Price: <gold><price>'
+      - '<yellow>Click to buy'
+
+# ---- Decorations ----
+# Items that do nothing when clicked. Use one slot or a list of slots.
+# Add, edit or delete entries freely.
+decorations:
+  corner-left:
+    slots: [0, 18]
+    material: LIGHT_BLUE_STAINED_GLASS_PANE
+    name: ''
+  corner-right:
+    slots: [8, 26]
+    material: LIGHT_BLUE_STAINED_GLASS_PANE
+    name: ''

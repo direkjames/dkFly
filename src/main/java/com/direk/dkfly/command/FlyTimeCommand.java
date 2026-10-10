@@ -150,7 +150,8 @@ public final class FlyTimeCommand extends DkCommand {
         Settings s = plugin.settings();
         AtomicBoolean capped = new AtomicBoolean(false);
         LongUnaryOperator change = switch (action) {
-            case "give" -> v -> capTracked(s, v + amount, capped);
+            // Never lowers someone who is already above the cap (e.g. after max-time was reduced).
+            case "give" -> v -> Math.max(v, capTracked(s, saturatedAdd(v, amount), capped));
             case "take" -> v -> Math.max(0, v - amount);
             default -> v -> capTracked(s, amount, capped);
         };
@@ -163,7 +164,7 @@ public final class FlyTimeCommand extends DkCommand {
             var ref = found.get();
             plugin.data().modify(ref.uuid(), change).whenComplete((total, error) -> plugin.tasks().sync(() -> {
                 if (error != null) {
-                    messages.send(sender, "pay-failed");
+                    messages.send(sender, "admin-failed", Messages.text("player", ref.name()));
                     return;
                 }
                 String key = switch (action) {
@@ -183,6 +184,11 @@ public final class FlyTimeCommand extends DkCommand {
                 }
             }));
         }));
+    }
+
+    private static long saturatedAdd(long a, long b) {
+        long r = a + b;
+        return ((a ^ r) & (b ^ r)) < 0 ? Long.MAX_VALUE : r;
     }
 
     private static long capTracked(Settings s, long value, AtomicBoolean capped) {

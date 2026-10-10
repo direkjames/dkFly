@@ -46,13 +46,9 @@ public final class DkFly extends DkPlugin {
     }
 
     @Override
-    protected String[] userConfigSections() {
-        return new String[]{"shop.items"};
-    }
-
-    @Override
     protected void enable() {
         long startedAt = System.currentTimeMillis();
+        removeOldSettings();
         settings = new Settings(cfg().yaml(), getLogger());
 
         repo = new FlyRepository(database());
@@ -95,6 +91,7 @@ public final class DkFly extends DkPlugin {
     @Override
     protected void disable() {
         if (placeholders != null) FlyPlaceholders.unhook(placeholders);
+        if (flight != null) flight.display().hideAll(Bukkit.getOnlinePlayers());
         if (data == null) return;
         List<FlyData.Snapshot> all = new ArrayList<>();
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -106,12 +103,28 @@ public final class DkFly extends DkPlugin {
         data.saveAllBlocking(all);
     }
 
+    /** Settings from dkFly 1.0.0 that were replaced in 1.1.0. */
+    private void removeOldSettings() {
+        boolean changed = false;
+        for (String key : List.of("landing.mode", "actionbar-while-flying", "combat.disable-fly", "bentobox")) {
+            if (cfg().yaml().contains(key, true)) {
+                cfg().yaml().set(key, null);
+                changed = true;
+            }
+        }
+        if (changed) {
+            cfg().save();
+            getLogger().info("Removed outdated dkFly 1.0.0 settings from config.yml.");
+        }
+    }
+
     @Override
     public void reloadAll() {
         super.reloadAll();
         settings = new Settings(cfg().yaml(), getLogger());
         shop.reload();
         flight.detectHooks();
+        flight.onReload();
     }
 
     public Settings settings() { return settings; }

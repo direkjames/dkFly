@@ -30,7 +30,7 @@ public final class FlyCommand extends DkCommand {
                 messages.send(sender, "player-only");
                 return;
             }
-            plugin.flight().toggle(p, true);
+            plugin.flight().toggle(p, p);
             return;
         }
 
@@ -43,8 +43,13 @@ public final class FlyCommand extends DkCommand {
             messages.send(sender, "unknown-player", Messages.text("player", args[0]));
             return;
         }
-        boolean on = plugin.flight().toggle(target, true);
-        if (sender != target) {
+        boolean before = plugin.data().get(target).enabled();
+        boolean on = plugin.flight().toggle(target, sender);
+        if (sender == target) return;
+        if (on == before) {
+            // Denied (no time, blocked world/region, combat, creative...). The target was told why.
+            messages.send(sender, "fly-other-failed", Messages.text("player", target.getName()));
+        } else {
             messages.send(sender, on ? "fly-on-other" : "fly-off-other", Messages.text("player", target.getName()));
         }
     }

@@ -11,7 +11,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 
 /**
- * PvP tagging and fall-damage protection after a safe landing.
+ * PvP tagging and fall-damage protection while landing.
  * Author: direk james
  */
 public final class CombatListener implements Listener {
@@ -35,7 +35,7 @@ public final class CombatListener implements Listener {
     public void onFall(EntityDamageEvent e) {
         if (e.getCause() != EntityDamageEvent.DamageCause.FALL) return;
         if (!(e.getEntity() instanceof Player p)) return;
-        if (plugin.flight().landing().shouldCancelFall(p, plugin.settings())) e.setCancelled(true);
+        if (plugin.flight().landing().shouldCancelFall(p)) e.setCancelled(true);
     }
 
     private static Player attacker(Entity damager) {

@@ -29,4 +29,10 @@ public final class CombatTracker {
     public void forget(UUID uuid) {
         taggedUntil.remove(uuid);
     }
+
+    /** Drops expired tags (players who left while tagged). */
+    public void prune() {
+        long now = System.currentTimeMillis();
+        taggedUntil.values().removeIf(until -> until <= now);
+    }
 }

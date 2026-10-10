@@ -3,7 +3,8 @@
 #  Author: direk james
 #
 #  Durations accept: 30 (seconds), 45s, 10m, 1h30m, 2d
-#  All messages are in messages.yml (MiniMessage format).
+#  Messages are in messages.yml, the fly shop is in gui.yml.
+#  Apply changes with /flytime reload.
 # ============================================
 
 # Fly time is only used while the player is actually in the air.
@@ -29,30 +30,53 @@ speed:
     - 'dkfly.speed.fast:0.15'
     - 'dkfly.speed.faster:0.2'
 
-# ---- What happens when fly turns off while the player is in the air ----
-# (time ran out, entered a blocked world/region, combat tag, admin toggle)
+# ---- Timer display ----
+display:
+  # Where the remaining fly time is shown while flying:
+  # BOSSBAR, ACTIONBAR, BOTH or NONE (countdown warnings still show on the action bar)
+  mode: BOSSBAR
+  bossbar:
+    # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12 or NOTCHED_20
+    style: PROGRESS
+    # Colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+    # The bar is full when the player starts flying and empties as time runs out.
+    color-high: GREEN
+    color-medium: YELLOW
+    color-low: RED
+    medium-below-percent: 50
+    low-below-percent: 20
+
+# ---- Turning flight off while in the air ----
 landing:
-  # SLOW_FALLING = give Slow Falling until they land
-  # NO_FALL_DAMAGE = they fall normally but take no fall damage on landing
-  # BOTH = slow falling and no fall damage
-  mode: BOTH
-  # Safety limit for the protection (it ends earlier once they touch the ground).
+  # A player using /fly to turn flight off must be within this many blocks of the
+  # ground (or water). Higher up they're told to land first. 3 blocks = no fall damage.
+  self-disable-max-height: 3
+  # What happens when flight is turned off for them while they're in the air:
+  #   BOTH           = Slow Falling + no fall damage
+  #   SLOW_FALLING   = Slow Falling only
+  #   NO_FALL_DAMAGE = they fall normally but take no fall damage on landing
+  #   NONE           = they just fall
+  # Ran out of fly time
+  out-of-time: BOTH
+  # Flew into a blacklisted world or a WorldGuard region with "dkfly deny"
+  restricted-area: NO_FALL_DAMAGE
+  # Hit another player or got hit (combat tag)
+  combat: NONE
+  # A staff member turned their flight off with /fly <player>
+  admin: BOTH
+  # Safety limit for the protection (it always ends as soon as they touch the ground).
   max-duration: 30s
 
 # ---- Running out of time ----
 countdown:
   enabled: true
-  # Seconds left when a warning is shown on the action bar (while flying).
+  # Seconds left when a warning flashes (with a sound) while flying.
   at: [300, 60, 30, 10, 5, 4, 3, 2, 1]
   sound:
     enabled: true
     key: block.note_block.pling
     volume: 1.0
     pitch: 1.4
-
-# Show remaining time on the action bar the whole time the player is flying.
-# The countdown warning above takes priority when it fires.
-actionbar-while-flying: true
 
 # ---- Persistence ----
 # Players who log out with fly on keep it on when they log back in,
@@ -90,7 +114,7 @@ placeholders:
   status-on: '<green>ON'
   status-off: '<red>OFF'
 
-# How fly time is shown in messages, the shop and %dkfly_time%.
+# How fly time is shown in messages, the boss bar, the shop and %dkfly_time%.
 time-format:
   # compact = 1h 5m 3s     digital = 01:05:03
   style: compact
@@ -118,58 +142,13 @@ transfer:
   allow-offline: true
 
 # ---- Fly shop (/flytime shop) ----
-# Paid with the server economy (dkBank through Vault for now).
+# Paid with the server economy (dkBank through Vault). Items and layout are in gui.yml.
 shop:
   enabled: true
-  title: '<dark_gray>Fly Shop'
-  rows: 3
-  # Item for empty slots. Use 'none' to leave them empty.
-  filler: GRAY_STAINED_GLASS_PANE
-  # Slot that shows the player's current fly time (-1 to hide).
-  info-slot: 4
-  info-material: FEATHER
-  # Add, remove or change packages freely. Removed packages will not come back.
-  # Lore placeholders: <time> <price> <balance>
-  items:
-    small:
-      slot: 11
-      material: FEATHER
-      name: '<aqua>15 Minutes of Flight'
-      time: 15m
-      price: 500
-      lore:
-        - '<gray>Adds <white><time></white> of fly time.'
-        - ''
-        - '<gray>Price: <gold><price>'
-        - '<yellow>Click to buy'
-    medium:
-      slot: 13
-      material: ELYTRA
-      name: '<aqua>1 Hour of Flight'
-      time: 1h
-      price: 1800
-      lore:
-        - '<gray>Adds <white><time></white> of fly time.'
-        - ''
-        - '<gray>Price: <gold><price>'
-        - '<yellow>Click to buy'
-    large:
-      slot: 15
-      material: PHANTOM_MEMBRANE
-      name: '<light_purple>5 Hours of Flight'
-      time: 5h
-      price: 8000
-      glow: true
-      # Optional: only players with this permission can buy it.
-      permission: ''
-      lore:
-        - '<gray>Adds <white><time></white> of fly time.'
-        - ''
-        - '<gray>Price: <gold><price>'
-        - '<yellow>Click to buy'
 
 # Show the dkFly banner (version, hooks, shop) in the console on startup.
 startup-banner: true
 
-# Save everyone's fly time to the database every N minutes (also saved on logout and shutdown).
+# Save everyone's fly time to the database every N minutes.
+# Purchases, transfers and admin changes are always saved right away.
 autosave-minutes: 5

@@ -36,7 +36,7 @@ public final class FlightManager {
 
     public void detectHooks() {
         worldGuardPresent = Bukkit.getPluginManager().isPluginEnabled("WorldGuard") && WorldGuardHook.ready();
-        bentoBoxPresent = Bukkit.getPluginManager().isPluginEnabled("BentoBox");
+        bentoBoxPresent = BentoBoxHook.init(plugin.getLogger());
     }
 
     public boolean worldGuardActive() { return worldGuardPresent && s().worldGuard; }

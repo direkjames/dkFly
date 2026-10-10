@@ -23,8 +23,9 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/") // Paper / Adventure
     maven("https://maven.enginehub.org/repo/")                // WorldGuard / WorldEdit
     maven("https://repo.extendedclip.com/releases/")          // PlaceholderAPI
-    maven("https://repo.codemc.org/repository/maven-public/") // BentoBox
 }
+
+// BentoBox is not a dependency: dkFly talks to it at runtime (see BentoBoxHook).
 
 dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:${property("purpurVersion")}")
@@ -40,9 +41,6 @@ dependencies {
         exclude(group = "org.bukkit")
         exclude(group = "org.spigotmc")
         exclude(group = "io.papermc.paper")
-    }
-    compileOnly("world.bentobox:bentobox:${property("bentoBoxVersion")}") {
-        isTransitive = false
     }
 }
 

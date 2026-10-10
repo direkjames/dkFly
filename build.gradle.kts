@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.direk"
-version = "1.1.0"
+version = "1.1.1"
 
 repositories {
     // dkCore (publishToMavenLocal). Only our own group is looked up here.

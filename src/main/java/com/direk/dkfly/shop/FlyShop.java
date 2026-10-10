@@ -8,6 +8,8 @@ import com.direk.dkcore.util.TimeUtil;
 import com.direk.dkfly.DkFly;
 import com.direk.dkfly.data.FlyData;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -22,12 +24,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * The fly shop GUI, built from gui.yml.
  * Author: direk james
  */
 public final class FlyShop {
+
+    /** Legacy '&' color codes like &6, &l, &x or &#ff00aa. */
+    private static final Pattern AMPERSAND_CODE = Pattern.compile("&([0-9a-fk-orx]|#[0-9a-f]{6})", Pattern.CASE_INSENSITIVE);
 
     /** Minimum time between purchases per player, so a lagging double-click can't buy twice. */
     private static final long CLICK_COOLDOWN_MS = 250;
@@ -158,7 +164,7 @@ public final class FlyShop {
         Messages m = plugin.messages();
         FlyData d = plugin.data().get(p);
 
-        String balance = economy.format(economy.balance(p));
+        String balance = money(economy, economy.balance(p));
         String flyTime = plugin.flight().isUnlimited(p)
                 ? plugin.settings().placeholderUnlimited
                 : plugin.settings().time.format(d.seconds());
@@ -180,7 +186,7 @@ public final class FlyShop {
         for (Package pkg : packages) {
             TagResolver r = TagResolver.resolver(base,
                     Messages.text("time", plugin.settings().time.format(pkg.seconds())),
-                    Messages.text("price", economy.format(pkg.price())));
+                    Messages.text("price", money(economy, pkg.price())));
             menu.set(pkg.slot(), pkg.icon().build(p, m, r), click -> buy(p, pkg));
         }
         if (filler != null) menu.fill(filler.build(p, m, base));
@@ -213,14 +219,14 @@ public final class FlyShop {
         }
         if (!economy.has(p, pkg.price()) || !economy.withdraw(p, pkg.price())) {
             m.send(p, "shop-not-enough-money",
-                    Messages.text("price", economy.format(pkg.price())),
-                    Messages.text("balance", economy.format(economy.balance(p))));
+                    Messages.text("price", money(economy, pkg.price())),
+                    Messages.text("balance", money(economy, economy.balance(p))));
             return;
         }
         plugin.data().modify(p.getUniqueId(), v -> v + pkg.seconds()); // saved right away
         m.send(p, "shop-bought",
                 Messages.text("time", plugin.settings().time.format(pkg.seconds())),
-                Messages.text("price", economy.format(pkg.price())));
+                Messages.text("price", money(economy, pkg.price())));
         plugin.getLogger().info(p.getName() + " bought " + pkg.id() + " (" + pkg.seconds() + "s) for " + pkg.price());
         // Refresh balance and time. Opening a new menu inside a click event must wait a tick.
         plugin.tasks().later(() -> {
@@ -230,6 +236,25 @@ public final class FlyShop {
 
     public void forget(UUID uuid) {
         lastClick.remove(uuid);
+    }
+
+    /**
+     * The economy's formatted amount without its own color codes.
+     * Economy plugins often return text like "§0$500" or "&6500 coins"; those codes
+     * would override the colors set in gui.yml/messages.yml (showing up black, for example).
+     * Stripping them lets our files decide the color.
+     */
+    public static String money(EconomyService economy, double amount) {
+        String text = economy.format(amount);
+        if (text == null) return String.valueOf(amount);
+        PlainTextComponentSerializer plain = PlainTextComponentSerializer.plainText();
+        if (text.indexOf('§') >= 0) {
+            text = plain.serialize(LegacyComponentSerializer.legacySection().deserialize(text));
+        }
+        if (AMPERSAND_CODE.matcher(text).find()) {
+            text = plain.serialize(LegacyComponentSerializer.builder().character('&').hexColors().build().deserialize(text));
+        }
+        return text;
     }
 
     /**

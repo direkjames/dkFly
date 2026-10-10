@@ -9,7 +9,7 @@ Server: **Purpur 26.3**, Java **25**. Package: `com.direk.dkfly`.
 
 1. Publish dkCore first: in the dkCore project run `gradlew publishToMavenLocal`.
 2. Open this folder in IntelliJ IDEA. Set Project SDK and Gradle JVM to **Java 25**.
-3. `./gradlew build` → `build/libs/dkFly-1.1.0.jar`.
+3. `./gradlew build` → `build/libs/dkFly-1.1.1.jar`.
 4. Put the jar in `plugins/` next to `dkCore-1.1.1.jar`.
 
 The dkCore version is set in `gradle.properties` (`dkCoreVersion`).
